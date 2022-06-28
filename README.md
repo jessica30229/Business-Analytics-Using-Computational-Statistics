@@ -85,3 +85,5 @@ Creating and Testing Complex Models
 Components vs. Factors   
 Structural Equation Modeling 
 SEMinR 
+
+## 17 TBA 
