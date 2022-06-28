@@ -1,0 +1,115 @@
+---
+title: BACS-R-programming
+output:
+  pdf_document:
+#         latex_engine: xelatex
+# mainfont: LiberationSerif
+# sansfont: LiberationSans
+# monofont: LiberationMono
+---
+
+## 2: Workspace and Files
+
+```{r knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 50), tidy = TRUE)}
+getwd() #current working directory
+ls() #objects that are in your workspace
+dir() #list all the files in your working directory
+```
+
+```{r}
+list.files
+args(list.files) #see the arguments to list.files
+```
+
+```{r}
+dir.create("testdir") #create new dictionary
+setwd("testdir")
+```
+
+```{r}
+file.create("mytest.R") #create a file in your working directory
+file.exists("mytest.R") #check to see if "mytest.R" exists
+file.info("mytest.R") #access information about the file
+file.rename("mytest.R", "mytest2.R") #change the name of the file
+file.copy("mytest2.R", "mytest3.R") #make a copy of file
+file.path("mytest3.R") #provide the relative path to the file
+file.path("folder1", "folder2")
+```
+
+```{r}
+dir.create(file.path('testdir2', 'testdir3'), recursive = TRUE)
+```
+
+## 3: Sequences of Numbers
+
+# :
+
+```{r}
+1:20
+pi:10
+15:1
+```
+
+```{r}
+?`:`
+```
+
+# seq()
+
+```{r}
+seq(0, 10, by=0.5)
+my_seq <- seq(5, 10, length=30)
+length(my_seq)
+```
+
+```{r}
+seq_along(my_seq)
+```
+
+# rep()
+
+```{r}
+rep(0, times = 40)
+rep(c(0, 1, 2), times = 10)
+rep(c(0, 1, 2), each = 10)
+```
+
+
+## 4: Vectors
+
+# Logical vectors
+
+```{r}
+num_vect <- c(0.5, 55, -10, 6)
+tf <- num_vect < 1 #a vector of 4 logical values
+```
+# Character vectors
+
+```{r}
+my_char <- c("My", "name", "is")
+paste(my_char, collapse = " ")
+paste(c(my_char, "Jessica"), collapse=" ")
+paste("Hello", "world!", sep = " ")
+paste(1:3, c("X", "Y", "Z"), sep = "")
+```
+
+paste(LETTERS, 1:4, sep = "-")
+ [1] "A-1" "B-2" "C-3" "D-4" "E-1" "F-2" "G-3" "H-4" "I-1" "J-2" "K-3" "L-4"
+[13] "M-1" "N-2" "O-3" "P-4" "Q-1" "R-2" "S-3" "T-4" "U-1" "V-2" "W-3" "X-4"
+[25] "Y-1" "Z-2"
+
+
+## 6: Subsetting Vectors
+
+```{r}
+x[is.na(x)]
+y <- x[!is.na(x)]
+y[y > 0]
+```
+
+NA > 0 evaluates to NA
+
+```{r}
+x[!is.na(x) & x > 0]
+```
+

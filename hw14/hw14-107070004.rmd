@@ -1,0 +1,139 @@
+---
+title: BACS-hw14-107070004
+output:
+  pdf_document:
+mainfont: LiberationSerif
+sansfont: LiberationSans
+monofont: LiberationMono
+---
+
+Let’s reconsider the security questionnaire from last week, where consumers were asked security related questions about one of the e-commerce websites they had recently used.
+
+```{r}
+security_questions <- read.csv("./security_questions.csv")
+sq_pca <- prcomp(security_questions)
+```
+
+# Question 1) Earlier, we examined a dataset from a security survey sent to customers of e-commerce websites. However, we only used the eigenvalue > 1 criteria and the screeplot to find a suitable number of components. Let’s perform a parallel analysis as well this week:
+
+## (a) Show a single visualization with scree plot of data, scree plot of simulated noise (use average eigenvalues of >= 100 noise samples), and a horizontal line showing the eigenvalue = 1 cutoff.
+
+```{r}
+var_sq_pca<-sq_pca$sdev^2
+noise<-data.frame(replicate(ncol(security_questions),rnorm(nrow(security_questions))))
+eigen(cor(noise))$values|>round(2)
+noise_pca<-prcomp(noise,scale. = TRUE)
+screeplot(noise_pca, type="lines", col="blue" , ylim=c(0,25))
+lines(var_sq_pca, type="b", col="pink")
+abline(h=1, lty="dotted", col="darkgray", lwd=2)
+legend(7, 15, legend = c("simulated noise", "security questions data"),
+       , lty = 1, col = c("blue", "pink"), cex = 0.6)
+```
+
+## (b) How many dimensions would you retain if we used Parallel Analysis?
+
+```{r}
+sim_noise_ev<-function(n, p) {
+  noise<-data.frame(replicate(p, rnorm(n)))
+  eigen(cor(noise))$values|>round(2)
+}
+evalues_noise<-replicate(100, sim_noise_ev(ncol(security_questions), nrow(security_questions)))
+evalues_mean<-apply(evalues_noise, 1, mean)
+plot(var_sq_pca, type="b", col="pink", xaxt = 'n'
+    , ylim=c(0,35), xlim=c(1,18), xlab="factors", ylab="variences"
+    , main="scree plot of data and simulated noise")
+axis(1, at = 1:18)
+lines(evalues_mean, type="b", col="green")
+abline(h=1, lty="dotted", col="darkgray", lwd=2)
+legend(12, 30, legend = c("simulated noise", "security questions data")
+       , lty = 1, col = c("pink", "green"), cex = 0.6)
+```
+
+ans: 0 dimensions will be retained.
+
+# Question 2) Earlier, we treated the underlying dimensions of the security dataset as composites and examined their eigenvectors (weights). Now, let’s treat them as factors and examine factor loadings (use the principal() method from the psych package)
+
+```{r, include=FALSE}
+install.packages("psych",repos = "http://cran.us.r-project.org")
+library(psych)
+```
+
+```{r}
+sq_principal<-principal(security_questions, nfactor=3, rotate="none", scores=TRUE)
+sq_principal
+```
+
+## (a) Looking at the loadings of the first 3 principal components, to which components does each item seem to best belong?
+
+- PC1 : Q1, Q3, Q8, Q9, Q11, Q13, Q14, Q15, Q16, Q18
+- PC2 : none
+- PC3 : none
+
+## (b) How much of the total variance of the security dataset do the first 3 PCs capture?
+
+```{r}
+sq_eigen <- eigen(cor(security_questions))
+sq_eigen$values[1:3]/sum(sq_eigen$values)
+```
+
+## (c) Looking at commonality and uniqueness, which items are less than adequately explained by the first 3 principal components?
+
+ans: Q2 is less than adequately explained by the first 3 principal components, because its u2 is 0.54 (more than 0.5).
+
+## (d) How many measurement items share similar loadings between 2 or more components?
+
+```{r}
+plot(sq_principal$loadings)
+text(sq_principal$loadings, pos=1, labels=rownames(sq_principal$loadings))
+abline(h=0, v=0)
+```
+
+- Q1 & Q14 & Q18
+- Q6 & Q10
+- Q4 & Q12 & Q17
+
+ans: 8
+
+## (e) Can you interpret a ‘meaning’ behind the first principal component from the items that load best upon it? (see the wording of the questions of those items)
+
+ans: The items with best loadings with first principal component means that correlation of PC and items are high.
+Due to relatively high correlations among items, this would be a good candidate for factor analysis.
+Recall that the goal of factor analysis is to model the interrelationships between items with fewer (latent) variables.
+These interrelationships can be broken up into multiple components.
+
+# Question 3) To improve interpretability of loadings, let’s rotate the our principal component axes using the varimax technique to get rotated components (extract and rotate only three principal components)
+
+```{r}
+sq__pca_rot<-principal(security_questions, nfactor=3, rotate="varimax", scores=TRUE)
+sq__pca_rot
+```
+
+## (a) Individually, does each rotated component (RC) explain the same, or different, amount of variance than the corresponding principal components (PCs)?
+
+ans: No, there are totally different.
+
+## (b) Together, do the three rotated components explain the same, more, or less cumulative variance as the three principal components combined?
+
+ans:
+
+- RC1 < PC1
+- RC2 > PC2
+- RC3 > PC3
+
+## (c) Looking back at the items that shared similar loadings with multiple principal components (#2d), do those items have more clearly differentiated loadings among rotated components?
+
+ans: The items that shared similar loadings with multiple principal components, share similar loadings with rotated components.
+
+## (d) Can you now more easily interpret the “meaning” of the 3 rotated components from the items that load best upon each of them? (see the wording of the questions of those items)
+
+ans: After rotating the principal components, the original dimensions are closer to axes.
+Therfore, Rotated components rotate principal components to maximize interpretation of loadings (increase interpretabilty).
+
+## (e) If we reduced the number of extracted and rotated components to 2, does the meaning of our rotated components change?
+
+```{r}
+sq__pca_rot<-principal(security_questions, nfactor=2, rotate="varimax", scores=TRUE)
+sq__pca_rot
+```
+
+ans: Yes, as you can see the RC1 and RC2's results are different from the 3 rotated components.

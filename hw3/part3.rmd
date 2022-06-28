@@ -1,0 +1,104 @@
+---
+title: BACS-hw03-107070004
+output: pdf_document
+mainfont: LiberationSerif
+sansfont: LiberationSans
+monofont: LiberationMono
+---
+
+```{r, include=FALSE}
+bookings <- read.table("first_bookings_datetime_sample.txt", header=TRUE)
+bookings$datetime[1:9]
+hours  <- as.POSIXlt(bookings$datetime, format="%m/%d/%Y %H:%M")$hour
+mins   <- as.POSIXlt(bookings$datetime, format="%m/%d/%Y %H:%M")$min
+minday <- hours*60 + mins
+# plot(density(minday), main="Minute (of the day) of first ever booking", col="blue", lwd=2)
+```
+
+# Question 3)
+
+The startup company EZTABLE has an online restaurant reservation system that is accessible by mobile and web.
+Imagine that EZTABLE would like to start a promotion for new members to make their bookings earlier in the day.
+
+## a) What is the “average” booking time for new members making their first restaurant booking?(use minday, which is the absolute minute of the day from 0-1440)
+
+```{r}
+mean(minday)
+```
+
+### i) Use traditional statistical methods to estimate the population mean of minday, its standard error, and the 95% confidence interval (CI) of the sampling means
+
+```{r}
+visualize_95_mean_ci <- function(sample) {
+  sample_means <- mean(sample)
+  sample_size <- length(sample)
+  sample_stdevs <- sd(sample)
+  sample_stderrs <- sample_stdevs/sqrt(sample_size)
+  ci95_low  <- sample_means - sample_stderrs*1.96
+  ci95_high <- sample_means + sample_stderrs*1.96
+  cat("The 95% confidence interval (CI) is", mean(abs(ci95_high -ci95_low)));
+}
+```
+
+```{r}
+mean(minday)
+std_error <- sd(minday)/sqrt(length(minday))
+std_error
+visualize_95_mean_ci(minday)
+```
+
+### ii) Bootstrap to produce 2000 new samples from the original sample
+
+```{r}
+sample_size <- 2000
+sample0 <- sample(minday, sample_size)
+minday.resemples <- replicate(2000, sample(minday, length(minday), replace=TRUE))
+```
+
+### iii) Visualize the means of the 2000 bootstrapped samples
+
+```{r}
+  plot(density(minday.resemples), lwd=2, main="means of bootstrapped samples")
+  plot_resample_mean<-function(sample_i) {
+    abline(v=mean(sample_i), col=rgb(0.0, 0.4, 0.0, 0.01))
+  }
+  apply(minday.resemples , 2, FUN = plot_resample_mean)
+```
+
+### iv) Estimate the 95% CI of the bootstrapped means.
+
+```{r}
+  sample_means <- apply(minday.resemples, 2, FUN=mean)
+  quantile(sample_means, probs = c(0.025, 0.975))
+```
+
+## b) By what time of day, have half the new members of the day already arrived at their restaurant?
+
+```{r}
+  hour <- round(median(minday)/60, 0)
+  minute <- median(minday)%%60
+  cat(hour,":",minute)
+```
+
+### i) Estimate the median of minday
+
+```{r}
+median(minday)
+```
+
+### ii) Visualize the medians of the 2000 bootstrapped samples
+
+```{r}
+  plot(density(minday.resemples), lwd=2, main="medians of bootstrapped samples")
+  plot_resample_median<-function(sample_i) {
+    abline(v=median(sample_i), col=rgb(0.0, 0.4, 0.0, 0.01))
+  }
+  apply(minday.resemples , 2, FUN = plot_resample_median)
+```
+
+### iii) Estimate the 95% CI of the bootstrapped medians.
+
+```{r}
+  sample_medians <- apply(minday.resemples, 2, FUN=median)
+  quantile(sample_medians, probs = c(0.025, 0.975))
+```

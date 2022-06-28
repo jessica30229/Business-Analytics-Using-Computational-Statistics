@@ -1,0 +1,318 @@
+---
+title: BACS-hw10-107070004
+output:
+  pdf_document:
+mainfont: LiberationSerif
+sansfont: LiberationSans
+monofont: LiberationMono
+---
+
+# Question 1) Download demo_simple_regression_rsq.R from Canvas – it has a function that runs a regression simulation. This week, the simulation also reports R2 along with the other metrics from last week.
+
+To answer the questions below, understand each of these four scenarios by simulating them:
+Scenario 1: Consider a very **narrowly dispersed** set of points that have a negative or positive **steep** slope
+Scenario 2: Consider a **widely dispersed** set of points that have a negative or positive **steep** slope
+Scenario 3: Consider a very **narrowly dispersed** set of points that have a negative or positive **shallow** slope
+Scenario 4: Consider a **widely dispersed** set of points that have a negative or positive **shallow** slope
+
+```{r}
+source("demo_simple_regression_rsq.R")
+```
+
+* Scenario 1 :
+
+```{r}
+set.seed(2)
+x_add = runif(100, 0, 50)
+points_1 = data.frame(
+  x <- rnorm(100, mean = 0, sd=5) + x_add,
+  y <- (0.8) * x
+)
+plot_regr_rsq(points_1)
+```
+
+* Scenario 2 :
+
+```{r}
+set.seed(2)
+x_add = runif(100, 0, 50)
+y_add = runif(100, 0, 15)
+points_2 = data.frame(
+  x <- rnorm(100, mean = 0, sd=5) + x_add,
+  y <- (0.8) * x + y_add
+)
+plot_regr_rsq(points_2)
+```
+
+* Scenario 3 :
+
+```{r}
+set.seed(2)
+x_add = runif(100, 0, 50)
+points_3 = data.frame(
+  x <- rnorm(100, mean = 0, sd=5) + x_add,
+  y <- (0.1) * x
+)
+plot_regr_rsq(points_3)
+```
+
+* Scenario 4
+
+```{r}
+set.seed(2)
+x_add = runif(100, 0, 50)
+y_add = runif(100, 0, 15)
+points_4 = data.frame(
+  x <- rnorm(100, mean = 0, sd=5) + x_add,
+  y <- (0.1) * x + y_add
+)
+plot_regr_rsq(points_4)
+```
+
+## (a) Comparing scenarios 1 and 2, which do we expect to have a stronger R^2 ?
+
+
+ans: scenarios 1 > scenarios 2
+
+## (b) Comparing scenarios 3 and 4, which do we expect to have a stronger R^2 ?
+
+ans: scenarios 3 > scenarios 4
+
+## (c) Comparing scenarios 1 and 2, which do we expect has bigger/smaller SSE, SSR, and SST? (intuitively)
+
+
+|   | scenarios 1 | scenarios 2 |
+|---|---|---|
+| SSE | smaller | bigger |
+| SSR | bigger | smaller |
+| SST | bigger | smaller | 
+
+## (d) Comparing scenarios 3 and 4, which do we expect has bigger/smaller SSE, SSR, and SST? (intuitively)
+
+|   | scenarios 3 | scenarios 4 |
+|---|---|---|
+| SSE | smaller | bigger |
+| SSR | bigger | smaller |
+| SST | smaller | bigger | 
+
+
+# Question 2) Let’s perform regression ourselves on the programmer_salaries.txt dataset we saw in class.
+You can read the file using read.csv("programmer_salaries.txt", sep="\t")
+
+```{r}
+programmer_salaries <- read.csv("programmer_salaries.txt", sep="\t")
+```
+
+## (a) First, use the lm() function to estimate the model Salary ~ Experience + Score + Degree
+(show the beta coefficients, R^2 and the first 5 values of y ($fitted.values) and  ($residuals)
+
+```{r}
+reg <- lm(Salary ~ Experience + Score + Degree, data=programmer_salaries)
+summary(reg)
+reg$fitted.values[1:5]
+reg$residuals[1:5]
+```
+
+
+
+## (b) Use only linear algebra (and the geometric view of regression) to estimate the regression yourself:
+
+### (i) Create an X matrix that has a first column of 1s followed by columns of the independent variables (only show the code)
+
+```{r,results=FALSE}
+intercept <- rep(1, 20)
+x1 <- programmer_salaries$Experience
+x2 <- programmer_salaries$Score
+x3 <- programmer_salaries$Degree
+X <- cbind(intercept, x1, x2, x3)
+X
+```
+
+### (ii) Create a y vector with the Salary values (only show the code)
+
+```{r,results=FALSE}
+y <- programmer_salaries$Salary
+y
+```
+
+### (iii) Compute the beta_hat vector of estimated regression coefficients (show the code and values)
+
+```{r}
+beta_hat <- solve((t(X)%*%X))%*%t(X)%*%y
+beta_hat
+```
+
+### (iv) Compute a y_hat vector of estimated y values, and a res vector of residuals (show the code and the first 5 values of y_hat and res)
+
+```{r}
+y_hat <- X%*%beta_hat
+head(y_hat, 5)
+res <- y-y_hat
+head(res, 5)
+```
+
+### (v) Using only the results from (i) – (iv), compute SSR, SSE and SST (show the code and values)
+
+```{r}
+SSR <- sum((y_hat-mean(y))^2)
+SSR
+SSE <- sum((y-y_hat)^2)
+SSE
+SST <- sum((y-mean(y))^2)
+SST
+```
+
+## (c) Compute R^2 for in two ways, and confirm you get the same results (show code and values):
+
+
+### (i) Use any combination of SSR, SSE, and SST
+
+```{r}
+R <- SSR/SST
+R
+R <- 1 - SSE/SST
+R
+```                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+
+### (ii) Use the squared correlation of vectors y and y
+
+```{r}
+cor(y, y_hat)^2
+```
+
+# Question 3) We’re going to take a look back at the early heady days of global car manufacturing, when American, Japanese, and European cars competed to rule the world. Take a look at the data set in file auto-data.txt. We are interested in explaining what kind of cars have higher fuel efficiency (mpg).
+
+- mpg: miles-per-gallon (dependent variable)
+- cylinders: cylinders in engine
+- displacement: size of engine
+- horsepower: power of engine
+- weight: weight of car
+- acceleration: acceleration ability of car
+- model_year: year model was released
+- origin: place car was designed (1: USA, 2: Europe, 3: Japan)
+- car_name: make and model names
+
+Note that the data has missing values (‘?’ in data set), and lacks a header row with variable names:
+
+```{r}
+auto <- read.table("auto-data.txt", header=FALSE, na.strings = "?")
+names(auto) <- c("mpg", "cylinders", "displacement", "horsepower", "weight", 
+                 "acceleration", "model_year", "origin", "car_name")
+head(auto, 5)
+```
+
+## (a) Let’s first try exploring this data and problem:
+
+### (i) Visualize the data in any way you feel relevant (report only relevant/interesting ones)
+
+```{r}
+plot(NULL, xlim=c(0,1000), ylim=c(0,50), ylab="y label", xlab="x lablel")
+lm.model1 <- lm(mpg~displacement, data=auto)
+lm.model2 <- lm(mpg~horsepower, data=auto)
+lm.model3 <- lm(mpg~weight, data=auto)
+abline(lm.model1, lwd=2, col="green")
+abline(lm.model2, lwd=2, col="blue")
+abline(lm.model3, lwd=2, col="red")
+legend(700, 20, legend = c("mpg~displacement", "mpg~horsepower", "mpg~weight"),
+       col = c("green", "blue", "red"), lty = 1, cex = 0.6)
+```
+
+### (ii) Report a correlation table of all variables, rounding to two decimal places (in the cor() function, set use="pairwise.complete.obs" to handle missing values)
+
+```{r, include=FALSE}
+install.packages("Hmisc",repos = "http://cran.us.r-project.org")
+library(Hmisc)
+install.packages("RcmdrMisc",repos = "http://cran.us.r-project.org")
+library(RcmdrMisc)
+install.packages("corrplot",repos = "http://cran.us.r-project.org")
+library(corrplot)
+```
+
+```{r}
+auto_m <- data.matrix(auto)
+res <- cor(auto_m, use="pairwise.complete.obs")
+round(res, 2)
+corrplot(res, type="upper", order="hclust")
+```
+
+*Positive correlations are displayed in blue and negative correlations in red color. Color intensity and the size of the circle are proportional to the correlation coefficients. In the right side of the correlogram, the legend color shows the correlation coefficients and the corresponding colors.*
+
+### (iii) From the visualizations and correlations, which variables seem to relate to mpg?
+
+ans: horsepower, weight, cylinders, displacement
+
+### (iv) Which relationships might not be linear? (don’t worry about linearity for rest of this HW)
+
+ans: car_name to all the other relationship.
+
+### (v) Are there any pairs of independent variables that are highly correlated (r > 0.7)
+
+ans: Yes. Such as mpg~housepower, mpg~weight, mpg~cylinders, mpg~displacement,
+     displacement~housepower, displacement~weight, displacement~cylinders
+     cylinders~housepower, cylinders~weight, weight~housepower
+
+## (b) Let’s create a linear regression model where mpg is dependent upon all other suitable variables (Note: origin is categorical with three levels, so use factor(origin) in lm(...)  to split it into two dummy variables)
+
+```{r}
+auto_m2 <- as.data.frame(auto_m)
+lm2 <- lm(mpg ~ cylinders + displacement + horsepower+ weight + acceleration 
+        + model_year + factor(origin), data=auto_m2)
+summary(lm2)
+```
+
+### (i) Which independent variables have a ‘significant’ relationship with mpg at 1% significance?
+
+|   | Pr | significance |
+|---|---|---|
+| cylinders | 0.128215 | |
+| displacement | 0.001863 | ** |
+| horsepower | 0.185488 | |
+| weight | < 2e-16 | *** |
+| acceleration | 0.421101 | |
+| model_year | < 2e-16 | *** |
+| factor(origin)2 | 4.72e-06 | *** |
+| factor(origin)3 | 3.93e-07 | *** |
+
+ans: displacement have a ‘significant’ relationship with mpg at 1% significance.
+
+### (ii) Looking at the coefficients, is it possible to determine which independent variables are the most effective at increasing mpg? If so, which ones, and if not, why not? (hint: units!)
+
+```{r}
+lm2$coefficients
+```
+
+ans:  Estimate of cylinders is the largest and is significant, therefore it's the most effective one.
+
+## (c) Let’s try to resolve some of the issues with our regression model above.
+
+
+### (i) Create fully standardized regression results: are these slopes easier to compare? (note: consider if you should standardize origin)
+
+```{r}
+auto_std <- auto
+auto_std[,1:7] <- lapply(auto_std[,1:7], function(x) c(scale(x)))
+auto_std <- data.frame(auto_std, auto$car_name)
+summary(lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration
+        + model_year + factor(origin), data=auto_std))
+```
+
+ans: It is easier to compare since the coefficients are more or less around (1,-1).
+
+### (ii) Regress mpg over each nonsignificant independent variable, individually. Which ones become significant when we regress mpg over them individually?
+
+```{r}
+summary(lm(mpg ~ weight + acceleration + model_year, data=auto_m2))
+```
+
+ans: The acceleration becomes significant.
+
+### (iii) Plot the density of the residuals: are they normally distributed and centered around zero? (get the residuals of a fitted linear model, e.g. regr <- lm(...), using regr$residuals
+
+```{r}
+regr <- lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration
+          + model_year + factor(origin), data=auto_m2)
+plot(density(regr$residuals), main="density of the residuals")
+abline(v=mean(regr$residuals), lwd = 3)
+```
+
+ans: They are normally distributed and centered around zero.

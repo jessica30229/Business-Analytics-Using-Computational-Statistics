@@ -1,0 +1,122 @@
+---
+title: BACS-hw07-107070004
+output:
+  pdf_document:
+mainfont: LiberationSerif
+sansfont: LiberationSans
+monofont: LiberationMono
+---
+
+# Question 1)
+
+Let’s develop some intuition about the data and results:
+
+```{r, include=FALSE}
+install.packages("plyr",repos = "http://cran.us.r-project.org")
+install.packages("readr",repos = "http://cran.us.r-project.org")
+library(plyr)
+library(readr)
+```
+
+https://datascienceplus.com/how-to-import-multiple-csv-files-simultaneously-in-r-and-create-a-data-frame/
+
+```{r, results='hide', warning=FALSE}
+mydir = "pls-media"
+myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
+dat_csv = ldply(myfiles, read_csv)
+```
+
+## (a) What are the means of viewers’ intentions to share (INTEND.0) on each of the four media types?
+
+```{r}
+by_media <- split(dat_csv , dat_csv$media)
+by_media[1]
+ans <- sapply(by_media[1], mean)
+ans
+```
+
+## (b) Visualize the distribution and mean of intention to share, across all four media. (Your choice of data visualization; Try to put them all on the same plot and make it look sensible)
+
+```{r}
+
+```
+
+## (c) From the visualization alone, do you feel that media type makes a difference on intention to share?
+
+```{r}
+
+```
+
+# Question 2)
+
+Let’s try traditional one-way ANOVA:
+
+## (a) State the null and alternative hypotheses when comparing INTEND.0 across four groups in ANOVA
+
+## (b) Let’s compute the F-statistic ourselves:
+
+### (i) Show the code and results of computing MSTR, MSE, and F
+
+```{r}
+
+```
+
+### (ii) Compute the p-value of F, from the null F-distribution; is the F-value significant? If so, state your conclusion for the hypotheses.
+
+```{r}
+
+```
+
+## (c) Conduct the same one-way ANOVA using the aov() function in R – confirm that you got similar results.
+
+```{r}
+
+```
+
+## (d) Regardless of your conclusions, conduct a post-hoc Tukey test (feel free to use the TukeyHSD() function in R) to see if any pairs of media have significantly different means – what do you find?
+
+```{r}
+
+```
+
+## (e) Do you feel the classic requirements of one-way ANOVA were met? (Feel free to use any combination of methods we saw in class or any analysis we haven’t covered)
+
+```{r}
+
+```
+
+# Question 3)
+
+One of the assumptions of some classical statistical tests is that our population data should be roughly normal. Let’s explore one way of visualizing whether a sample of data is normally distributed.
+
+## (a) State the null and alternative hypotheses (in terms of distribution or difference of mean ranks)
+
+```{r}
+
+```
+
+## (b) Let’s compute (an approximate) Kruskal Wallis H ourselves:
+
+### (i) Show the code and results of computing H
+
+```{r}
+
+```
+
+### (ii) Compute the p-value of H, from the null chi-square distribution; is the H value significant? If so, state your conclusion of the hypotheses.
+
+```{r}
+
+```
+
+## (c) Conduct the same test using the kruskal.wallis() function in R – confirm that you got similar results.
+
+```{r}
+
+```
+
+## (d) Regardless of your conclusions, conduct a post-hoc Dunn test (feel free to use the dunnTest() function from the FSA package) to see if any pairs of media are significantly different – what do you find?
+
+```{r}
+
+```

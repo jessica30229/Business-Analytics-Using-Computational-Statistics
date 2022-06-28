@@ -1,0 +1,202 @@
+---
+title: BACS-hw07-107070004
+output:
+  pdf_document:
+mainfont: LiberationSerif
+sansfont: LiberationSans
+monofont: LiberationMono
+---
+
+# Question 1)
+
+```{r, include=FALSE}
+# install.packages("dplyr",repos = "http://cran.us.r-project.org")
+# library(dplyr)
+```
+
+Let’s develop some intuition about the data and results:
+
+```{r}
+mydir = "pls-media"
+myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
+df_total = vector()
+for (i in c(1:length(myfiles))) {
+  df_dict <- read.csv(myfiles[i])
+  df = data.frame(df_dict$INTEND.0)
+  colnames(df) <- paste("media",i)
+  df_total <- c(df_total,df)
+}
+```
+
+## (a) What are the means of viewers’ intentions to share (INTEND.0) on each of the four media types?
+
+```{r}
+all_mean <- sapply(df_total, mean)
+all_mean
+```
+
+## (b) Visualize the distribution and mean of intention to share, across all four media. (Your choice of data visualization; Try to put them all on the same plot and make it look sensible)
+
+```{r, fig.height=5}
+i <- 1
+cl <- rainbow(4)
+for (df in df_total) {
+  if(i == 1) plot(density(df),col = cl[i], main="media")
+  else lines(density(df), col = cl[i])
+  abline(v=mean(df), col = cl[i])
+  i <- i+1
+}
+legend(0, 0.2, legend = c("media 1", "media 2", "media 3", "media 4"),
+       col = cl, lty = 2:3, cex = 0.6)
+```
+
+## (c) From the visualization alone, do you feel that media type makes a difference on intention to share?
+
+Yes.
+
+# Question 2)
+
+Let’s try traditional one-way ANOVA:
+
+## (a) State the null and alternative hypotheses when comparing INTEND.0 across four groups in ANOVA
+
+$H_{null} : \mu_{1}=\mu_{2}=\mu_{3}=\mu_{4}$
+$H_{alt} : \mu_{1}\neq\mu_{2} ;\mu_{1}\neq\mu_{3} ;\mu_{1}\neq\mu_{4} ;\mu_{2}\neq\mu_{3} ;\mu_{2}\neq\mu_{4} ;\mu_{3}\neq\mu_{4}$
+
+## (b) Let’s compute the F-statistic ourselves:
+
+### (i) Show the code and results of computing MSTR, MSE, and F
+
+- MSTR
+
+```{r}
+k <- length(df_total)
+SSTR <- function(df) {
+  n <- length(df)
+  sstr <- n*sum((mean(df)-mean(all_mean))^2)
+}
+sstr_total <- sum(sapply(df_total, SSTR))
+df_mstr <- k-1
+df_mstr
+mstr <- sstr_total/df_mstr
+mstr
+```
+
+- MSE
+
+```{r}
+all_num <- 0
+MSE <- function(df) {
+  n <- length(df)
+  all_num <<- all_num + length(df)
+  sse <- sum((n-1)*(sd(df)^2))
+}
+sse_total <- sum(sapply(df_total, MSE))
+df_mse <- all_num - k
+mse <- sse_total/df_mse
+mse 
+```
+
+- F
+
+```{r}
+F <- mstr/mse
+F
+```
+
+### (ii) Compute the p-value of F, from the null F-distribution; is the F-value significant? If so, state your conclusion for the hypotheses.
+
+```{r}
+p <- pf(F, df_mstr, df_mse, lower.tail=FALSE)
+p
+```
+
+The p-value of the test is 0.05230686, which is more than the alpha level of 0.05.
+meaning that there was not sufficiently strong evidence to reject the null hypothesis and conclude that the groups are different.
+
+## (c) Conduct the same one-way ANOVA using the aov() function in R – confirm that you got similar results.
+
+```{r, include=FALSE}
+install.packages("reshape2",repos = "http://cran.us.r-project.org")
+library(reshape2)
+```
+
+```{r}
+ads <-melt(df_total,id.vars= NULL,variable.name= "L1",value.name= "value")
+oneway.test(ads$value~factor(ads$L1),var.equal=TRUE)
+summary(aov(ads$value~factor(ads$L1)))
+```
+
+## (d) Regardless of your conclusions, conduct a post-hoc Tukey test (feel free to use the TukeyHSD() function in R) to see if any pairs of media have significantly different means – what do you find?
+
+```{r}
+TukeyHSD(aov(ads$value~factor(ads$L1)),conf.level= 0.01)
+```
+
+- All of P adj. is > 0.05
+  -There is no significant difference between all groups.
+
+## (e) Do you feel the classic requirements of one-way ANOVA were met? (Feel free to use any combination of methods we saw in class or any analysis we haven’t covered)
+
+1. Normality – Each sample was drawn from a normally distributed population.
+2. Equal Variances – The variances of the populations that the samples come from are equal.
+3. Independence – The observations in each group are independent of each other and the observations within groups were obtained by a random sample.
+
+If these assumptions aren’t met, then the results of our one-way ANOVA could be unreliable.
+
+# Question 3)
+
+One of the assumptions of some classical statistical tests is that our population data should be roughly normal. Let’s explore one way of visualizing whether a sample of data is normally distributed.
+
+## (a) State the null and alternative hypotheses (in terms of distribution or difference of mean ranks)
+
+$H_{null} : \mu_{1}=\mu_{2}=\mu_{3}=\mu_{4}$
+$H_{alt} : \mu_{1}\neq\mu_{2} ;\mu_{1}\neq\mu_{3} ;\mu_{1}\neq\mu_{4} ;\mu_{2}\neq\mu_{3} ;\mu_{2}\neq\mu_{4} ;\mu_{3}\neq\mu_{4}$
+
+## (b) Let’s compute (an approximate) Kruskal Wallis H ourselves:
+
+### (i) Show the code and results of computing H
+
+```{r}
+ranks <- rank(ads$value)
+ranks
+group_ranks <- split(ranks, ads$L1)
+group_ranks
+group_ranksums <- sapply(group_ranks, sum)
+group_ranksums
+group_ranknum <- sapply(group_ranks, length)
+group_ranknum
+```
+
+```{r}
+N <- sum(group_ranknum)
+H <- (12/N*(N+1))*sum((group_ranksums^2)/group_ranknum)-3*(N+1)
+H
+```
+
+### (ii) Compute the p-value of H, from the null chi-square distribution; is the H value significant? If so, state your conclusion of the hypotheses.
+
+```{r}
+kw_p <- 1-pchisq(H, df=k-1)
+kw_p
+```
+
+## (c) Conduct the same test using the kruskal.wallis() function in R – confirm that you got similar results.
+
+```{r}
+kruskal.test(value ~ L1, data = ads)
+```
+
+## (d) Regardless of your conclusions, conduct a post-hoc Dunn test (feel free to use the dunnTest() function from the FSA package) to see if any pairs of media are significantly different – what do you find?
+
+```{r, include=FALSE}
+install.packages("FSA",repos = "http://cran.us.r-project.org")
+library(FSA)
+```
+
+```{r}
+dunnTest(value ~ L1, data = ads, method = "bonferroni")
+```
+
+- media 2 - media 4 is the only one which P adj. is < 0.05, and its Z value of -2.65613380 is less than 0, indicating that the latter group "media 4" is significantly larger than the former group "media 2".
+- There was no significant difference between other groups.
